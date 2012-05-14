@@ -3,7 +3,7 @@
 
 module Hiki
   class Session
-    MAX_AGE = 60 * 60
+    MAX_AGE = 24 * 60 * 60
 
     attr_reader :session_id
     attr_writer :user

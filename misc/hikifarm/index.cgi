@@ -1,14 +1,14 @@
-#!/usr/bin/env ruby
+#!/usr/local/bin/ruby
 # -*- coding: utf-8 -*-
 
 HIKIFARM_VERSION = '0.8.6'
 HIKIFARM_RELEASE_DATE = '2006-07-21'
 
 class HikifarmConfig
-  attr_reader :ruby, :hiki, :hikifarm_description
+  attr_reader :ruby, :hiki, :hikifarm_description, :charset
   attr_reader :default_pages, :data_root, :repos_type, :repos_root
   attr_reader :title, :css, :author, :mail, :cgi_name, :attach_cgi_name, :header, :footer, :cgi, :hikifarm_template_dir
-  
+
   def initialize
     require 'cgi'
     @cgi = CGI.new
@@ -18,7 +18,7 @@ class HikifarmConfig
   def load
     # デフォルト設定
     # 前もって定義してないと eval しても残らない
-    ruby = '/usr/bin/env ruby'
+    ruby = '/usr/local/bin/ruby'
     hiki = ''
     hikifarm_description = nil
     default_pages = ''
@@ -60,6 +60,7 @@ class HikifarmConfig
     @cgi_name = cgi_name
     @attach_cgi_name = attach_cgi_name
     @hikifarm_template_dir = hikifarm_template_dir
+    @charset = 'utf-8'
 
     # Support depracated configuration
     if cvsroot then
@@ -68,7 +69,7 @@ class HikifarmConfig
     end
 
     if @repos_root && %r!^(/|[a-z]:)! !~ @repos_root
-      msg = "Hiki does not support remote repository now. " + 
+      msg = "Hiki does not support remote repository now. " +
         "Please modify &quot;repos_root&quot; entry of &quot;hikifarm.conf&quot; file."
       page = ErrorPage.new(@hikifarm_template_dir, @author, @mail, @css, @title, msg)
       body = page.to_s
@@ -118,7 +119,7 @@ end
 
 class Hikifarm
   attr_reader :wikilist
-  
+
   def initialize(farm_pub_path, ruby, repos_type, repos_root, data_root)
     require "hiki/repos/#{repos_type}"
     @repos = Hiki::const_get("HikifarmRepos#{repos_type.capitalize}").new(repos_root, data_root)
@@ -182,11 +183,11 @@ class Hikifarm
   def command_key
     "c"
   end
-    
+
   def command_query(name)
     "?#{command_key}=#{CGI.escape(name)}"
   end
-  
+
   private
   def conf(wiki, hiki)
 <<CONF
@@ -226,10 +227,11 @@ class ErbPage
 
   def initialize(template_dir)
     @headings = {
-      'type' => 'text/html; charset=EUC-JP'
+      'type' => 'text/html; charset=utf-8'
     }
 
     @template_dir = template_dir
+    @conf = HikifarmConfig.new
   end
 
   def to_s
@@ -281,7 +283,7 @@ class HikifarmIndexPage < ErbPage
   private
   def error_msg(msg)
     if msg then
-      %Q|<p class="message">#{msg}</p>\n|
+      %Q|<p class="message">#{msg}</p>\n|.force_encoding(Encoding::ASCII_8BIT)
     else
       ''
     end
@@ -311,6 +313,7 @@ class HikifarmIndexPage < ErbPage
     end
     @headings['Last-Modified'] = CGI::rfc1123_date( wikilist[0].mtime ) unless wikilist.empty?
     r << "</table>\n"
+    r.force_encoding(Encoding::ASCII_8BIT)
   end
 end
 
@@ -321,7 +324,7 @@ class HikifarmRSSPage < ErbPage
       'rss'
     end
   end
-  
+
   def initialize(farm, hikifarm_uri, template_dir, hikifarm_description,
                  author, mail, title)
     super(template_dir)
@@ -340,10 +343,10 @@ class HikifarmRSSPage < ErbPage
   def template_name
     'rss.rdf'
   end
-  
+
   def setup_headings
     @headings['type'] = 'text/xml'
-    @headings['charset'] = 'EUC-JP'
+    @headings['charset'] = 'utf-8'
     @headings['Content-Language'] = 'ja'
     @headings['Pragma'] = 'no-cache'
     @headings['Cache-Control'] = 'no-cache'
@@ -358,49 +361,49 @@ class HikifarmRSSPage < ErbPage
       @wikilist.first.mtime
     end
   end
-  
+
   def rss_uri
     "#{@hikifarm_uri}#{@farm.command_query(self.class.command_name)}"
   end
-    
+
   def tag(name, content)
     "<#{name}>#{CGI.escapeHTML(content)}</#{name}>"
   end
-  
+
   def dc_prefix
     "dc"
   end
-  
+
   def content_prefix
     "content"
   end
-  
+
   def dc_tag(name, content)
     tag("#{dc_prefix}:#{name}", content)
   end
-  
+
   def content_tag(name, content)
     tag("#{content_prefix}:#{name}", content)
   end
-  
+
   def dc_language
     dc_tag("language", "ja-JP")
   end
-    
+
   def dc_creator
     version = "#{HIKIFARM_VERSION} (#{HIKIFARM_RELEASE_DATE})"
     creator = "HikiFarm version #{version}"
     dc_tag("creator", creator)
   end
-  
+
   def dc_publisher
     dc_tag("publisher", "#{@author} <#{@mail}>")
   end
-  
+
   def dc_rights
     dc_tag("rights", "Copyright (C) #{@author} <#{@mail}>")
   end
-  
+
   def dc_date(date)
     if date
       dc_tag("date", date.iso8601)
@@ -408,13 +411,13 @@ class HikifarmRSSPage < ErbPage
       ""
     end
   end
-  
+
   def rdf_lis(indent='')
     @wikilist.collect do |wiki|
       %Q[#{indent}<rdf:li rdf:resource="#{wiki_uri(wiki)}"/>]
     end.join("\n")
   end
-  
+
   def rdf_items(indent="")
     @wikilist.collect do |wiki|
       <<-ITEM
@@ -507,7 +510,7 @@ class App
   def command_name
     @cgi.params[@farm.command_key][0]
   end
-  
+
   def hikifarm_uri
     server_name = ENV['SERVER_NAME']
     server_port = ENV['SERVER_PORT']
@@ -533,7 +536,7 @@ class App
     path ||= script_name
     path.dup.untaint
   end
-  
+
   def build_uri(scheme, name, actual_port, default_port, path)
     port = (actual_port == default_port) ? '' : ":#{actual_port}"
     "#{scheme}://#{name}#{port}#{path}".untaint
@@ -542,7 +545,7 @@ end
 
 # main ###############
 if __FILE__ == $0 || ENV['MOD_RUBY']
-  $SAFE = 1
+  $SAFE = 0
   $:.delete(".") if File.writable?(".")
   conf = HikifarmConfig.new
   $:.unshift(conf.hiki)

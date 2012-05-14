@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/local/bin/ruby
 # $Id: hiki.cgi,v 1.36 2008-01-24 15:42:11 znz Exp $
 # Copyright (C) 2002-2004 TAKEUCHI Hitoshi <hitoshi@namaraii.com>
 
@@ -6,7 +6,7 @@ BEGIN { $stdout.binmode }
 begin
   # FIXME encoding can be different (eg. iso-8859-1 in
   # hikiconf.rb.sample.en).
-  Encoding.default_external = 'euc-jp'
+  Encoding.default_external = 'utf-8'
 rescue NameError
   $KCODE = 'e'
 end
@@ -31,7 +31,7 @@ begin
   else
     # FIXME encoding can be different (eg. iso-8859-1 in
     # hikiconf.rb.sample.en).
-    #cgi = CGI.new(:accept_charset=>"euc-jp")
+    #cgi = CGI.new(:accept_charset=>"utf-8")
 
     response = nil
     db = conf.database
