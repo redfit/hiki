@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # $Id: command.rb,v 1.92 2008-02-12 15:06:08 hiraku Exp $
 # Copyright (C) 2002-2004 TAKEUCHI Hitoshi <hitoshi@namaraii.com>
 
@@ -462,6 +463,12 @@ module Hiki
       p = @request.params['key']
       if p
         @p = @aliaswiki.original_name(p)
+
+        if /\A[a-zA-Z0-9]+\z/ !~ @p
+          @request.params['key'] = nil
+          return cmd_create( '英数字のみ指定できます' )
+        end
+
         if /^\./ =~ @p || @p.size > @conf.max_name_size || @p.size == 0
           @request.params['key'] = nil
           cmd_create( @conf.msg_invalid_filename( @conf.max_name_size) )
