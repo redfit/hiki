@@ -21,7 +21,11 @@
         <form action="<%= @contents[:cgi_name] %>" method="<%= @contents[:method] %>">
           <input type="hidden" value="<%= @contents[:cmd] %>" name="c">
           <%= @contents[:msg2] %><input size="30" maxlength="50" name="key" <%= @contents[:key] %>>
-          <input type="submit" value="<%= @contents[:button] %>"> 
+          <p>
+            英数字のみでページ名を指定してください。
+            次ページでタイトル名を日本語で指定できます。
+          </p>
+          <input type="submit" value="<%= @contents[:button] %>">
        </form>
       </div>
     </div>
