@@ -464,11 +464,6 @@ module Hiki
       if p
         @p = @aliaswiki.original_name(p)
 
-        if /\A[a-zA-Z0-9]+\z/ !~ @p
-          @request.params['key'] = nil
-          return cmd_create( '英数字のみ指定できます' )
-        end
-
         if /^\./ =~ @p || @p.size > @conf.max_name_size || @p.size == 0
           @request.params['key'] = nil
           cmd_create( @conf.msg_invalid_filename( @conf.max_name_size) )
@@ -548,6 +543,7 @@ module Hiki
     end
 
     def exist?( page )
+      page = escape(page)
       tmp = @aliaswiki.aliaswiki(page)
       if page != tmp and @p != page
         return @p
